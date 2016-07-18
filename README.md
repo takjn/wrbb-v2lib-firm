@@ -1,3 +1,7 @@
+SSD1306 mod
+------
+GR-CITRUS用のmrubyファームにSSD1306(I2C)サポートを追加しています。
+
 Wakayama.rb Ruby Board V2 library Firmware
 ------
 　Wakayama.rb のV2ライブラリを使ったRubyボードのソースです。
