@@ -34,6 +34,8 @@ mrb_value mrb_gfx_begin(mrb_state *mrb, mrb_value self)
 	pinMode(RB_PIN18, OUTPUT);
 	pinMode(RB_PIN19, OUTPUT);
 	display.begin(SSD1306_SWITCHCAPVCC, i2c_addr);
+	display.setTextColor(WHITE);
+	display.setFont(&acknowtt7pt7b);
 
 	return mrb_nil_value();
 }
@@ -77,16 +79,12 @@ mrb_value mrb_gfx_setTextSize(mrb_state *mrb, mrb_value self)
 	return mrb_nil_value();
 }
 
-
-
 mrb_value mrb_gfx_println(mrb_state *mrb, mrb_value self)
 {
 	mrb_value text;
 	int n = mrb_get_args(mrb, "|S", &text);
 
 	if(n > 0){
-		display.setTextColor(WHITE);
-	  display.setFont(&acknowtt7pt7b);
 	  display.println(RSTRING_PTR(text));
 	}
 	return mrb_nil_value();
@@ -98,12 +96,23 @@ mrb_value mrb_gfx_print(mrb_state *mrb, mrb_value self)
 	int n = mrb_get_args(mrb, "|S", &text);
 
 	if(n > 0){
-		display.setTextColor(WHITE);
-	  display.setFont(&acknowtt7pt7b);
 	  display.print(RSTRING_PTR(text));
 	}
 	return mrb_nil_value();
 }
+
+mrb_value mrb_gfx_drawText(mrb_state *mrb, mrb_value self)
+{
+	int x, y;
+	mrb_value text;
+	int n = mrb_get_args(mrb, "iiS", &x, &y, &text);
+
+	display.setCursor(x, y);
+  display.print(RSTRING_PTR(text));
+
+	return mrb_nil_value();
+}
+
 
 void ssd1306_Init(mrb_state* mrb) {
 
@@ -117,4 +126,5 @@ void ssd1306_Init(mrb_state* mrb) {
 	mrb_define_module_function(mrb, ssd1306Module, "set_text_size", mrb_gfx_setTextSize, MRB_ARGS_REQ(1));
 	mrb_define_module_function(mrb, ssd1306Module, "print", mrb_gfx_print, MRB_ARGS_OPT(1));
 	mrb_define_module_function(mrb, ssd1306Module, "println", mrb_gfx_println, MRB_ARGS_OPT(1));
+	mrb_define_module_function(mrb, ssd1306Module, "draw_text", mrb_gfx_drawText, MRB_ARGS_REQ(3));
 }
