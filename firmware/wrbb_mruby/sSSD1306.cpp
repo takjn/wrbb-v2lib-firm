@@ -113,6 +113,15 @@ mrb_value mrb_gfx_drawText(mrb_state *mrb, mrb_value self)
 	return mrb_nil_value();
 }
 
+mrb_value mrb_gfx_setTextWrap(mrb_state *mrb, mrb_value self)
+{
+	mrb_bool flag;
+	mrb_get_args(mrb, "b", &flag);
+
+	display.setTextWrap(flag);
+
+	return mrb_nil_value();
+}
 
 void ssd1306_Init(mrb_state* mrb) {
 
@@ -127,4 +136,5 @@ void ssd1306_Init(mrb_state* mrb) {
 	mrb_define_module_function(mrb, ssd1306Module, "print", mrb_gfx_print, MRB_ARGS_OPT(1));
 	mrb_define_module_function(mrb, ssd1306Module, "println", mrb_gfx_println, MRB_ARGS_OPT(1));
 	mrb_define_module_function(mrb, ssd1306Module, "draw_text", mrb_gfx_drawText, MRB_ARGS_REQ(3));
+	mrb_define_module_function(mrb, ssd1306Module, "set_text_wrap", mrb_gfx_setTextWrap, MRB_ARGS_REQ(1));
 }
