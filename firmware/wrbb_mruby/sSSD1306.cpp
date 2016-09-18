@@ -19,6 +19,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <acknow7pt.h>
+#include <pixel_dingbats.h>
 
 #include "../wrbb.h"
 
@@ -123,6 +124,18 @@ mrb_value mrb_gfx_setTextWrap(mrb_state *mrb, mrb_value self)
 	return mrb_nil_value();
 }
 
+mrb_value mrb_gfx_resetFont(mrb_state *mrb, mrb_value self)
+{
+	display.setFont(&acknowtt7pt7b);
+	return mrb_nil_value();
+}
+
+mrb_value mrb_gfx_useDingbatsFont(mrb_state *mrb, mrb_value self)
+{
+	display.setFont(&pixel_dingbats_78pt8b);
+	return mrb_nil_value();
+}
+
 void ssd1306_Init(mrb_state* mrb) {
 
 	struct RClass *ssd1306Module = mrb_define_module(mrb, "Ssd1306");
@@ -137,4 +150,6 @@ void ssd1306_Init(mrb_state* mrb) {
 	mrb_define_module_function(mrb, ssd1306Module, "println", mrb_gfx_println, MRB_ARGS_OPT(1));
 	mrb_define_module_function(mrb, ssd1306Module, "draw_text", mrb_gfx_drawText, MRB_ARGS_REQ(3));
 	mrb_define_module_function(mrb, ssd1306Module, "set_text_wrap", mrb_gfx_setTextWrap, MRB_ARGS_REQ(1));
+	mrb_define_module_function(mrb, ssd1306Module, "reset_font", mrb_gfx_resetFont, MRB_ARGS_NONE());
+	mrb_define_module_function(mrb, ssd1306Module, "use_dingbats_font", mrb_gfx_useDingbatsFont, MRB_ARGS_NONE());
 }
