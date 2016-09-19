@@ -136,6 +136,24 @@ mrb_value mrb_gfx_useDingbatsFont(mrb_state *mrb, mrb_value self)
 	return mrb_nil_value();
 }
 
+mrb_value mrb_gfx_drawRect(mrb_state *mrb, mrb_value self)
+{
+	int x, y, w, h;
+	mrb_get_args(mrb, "iiii", &x, &y, &w, &h);
+
+	display.drawRect(x, y, w , h, WHITE);
+	return mrb_nil_value();
+}
+
+mrb_value mrb_gfx_fillRect(mrb_state *mrb, mrb_value self)
+{
+	int x, y, w, h;
+	mrb_get_args(mrb, "iiii", &x, &y, &w, &h);
+
+	display.fillRect(x, y, w , h, WHITE);
+	return mrb_nil_value();
+}
+
 void ssd1306_Init(mrb_state* mrb) {
 
 	struct RClass *ssd1306Module = mrb_define_module(mrb, "Ssd1306");
@@ -152,4 +170,6 @@ void ssd1306_Init(mrb_state* mrb) {
 	mrb_define_module_function(mrb, ssd1306Module, "set_text_wrap", mrb_gfx_setTextWrap, MRB_ARGS_REQ(1));
 	mrb_define_module_function(mrb, ssd1306Module, "reset_font", mrb_gfx_resetFont, MRB_ARGS_NONE());
 	mrb_define_module_function(mrb, ssd1306Module, "use_dingbats_font", mrb_gfx_useDingbatsFont, MRB_ARGS_NONE());
+	mrb_define_module_function(mrb, ssd1306Module, "draw_rect", mrb_gfx_drawRect, MRB_ARGS_REQ(4));
+	mrb_define_module_function(mrb, ssd1306Module, "fill_rect", mrb_gfx_fillRect, MRB_ARGS_REQ(4));
 }
