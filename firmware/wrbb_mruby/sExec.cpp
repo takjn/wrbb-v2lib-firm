@@ -29,6 +29,7 @@
 #include "sI2c.h"
 #include "sServo.h"
 #include "sSSD1306.h"
+#include "sNeoPixel.h"
 
 #if REALTIMECLOCK
 	#include "sRtc.h"
@@ -71,6 +72,7 @@ bool notFinishFlag = true;
 	i2c_Init(mrb);		//I2C関連メソッドの設定
 	servo_Init(mrb);	//サーボ関連メソッドの設定
 	ssd1306_Init(mrb);	//SSD1306関連メソッドの設定
+	neopixel_Init(mrb);	//NeoPixel関連メソッドの設定
 
 	//classtest_Init(mrb);
 

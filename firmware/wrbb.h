@@ -18,7 +18,7 @@
 #  define DEBUG_PRINT(m,v)    // do nothing
 #endif
 
-#define RUBY_CODE_SIZE (1024 * 32)		//4kBまで実行可能とする
+#define RUBY_CODE_SIZE (1024 * 16)		//4kBまで実行可能とする
 
 //バイトコードバージョンを定義します
 #define BYTE_CODE2	2
