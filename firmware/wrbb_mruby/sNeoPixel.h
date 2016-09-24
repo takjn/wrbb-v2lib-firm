@@ -7,6 +7,9 @@
  * https://github.com/wakayamarb/wrbb-v2lib-firm/blob/master/MITL
  *
  */
+
+#include <Adafruit_NeoPixel/Adafruit_NeoPixel.h>
+
 //**************************************************
 // ライブラリを定義します
 //**************************************************
