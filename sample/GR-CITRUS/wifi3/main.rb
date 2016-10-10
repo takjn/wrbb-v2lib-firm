@@ -1,26 +1,32 @@
 #!mruby
-digitalWrite(4,1)   # HIGH:Enable, LOW:Disable
-digitalWrite(5,1)   # LOW:RESET
-digitalWrite(17,1)  # LOW + RESET ... Firmware Writing Mode
-pinMode(4,1)
-pinMode(5,1)
-pinMode(17,1)
+#GR-CITRUS Version 2.11
 
-usb = Serial.new(0,115200)
+Usb = Serial.new(0,115200)
 
 if( System.useWiFi() == 0)then
-    usb.println "WiFi Card can't use."
+    Usb.println "WiFi Card can't use."
    System.exit() 
 end
-usb.println "WiFi Ready"
+Usb.println "WiFi Ready"
 
-#usb.println WiFi.at("CWQAP")
+Usb.println "WiFi Get Version"
+Usb.println WiFi.version
 
-usb.println WiFi.config
-usb.println WiFi.connect("000740DE0D79","hama1297noiti")
-#usb.println WiFi.cwjap("TAROSAY","37000")
+Usb.println "WiFi disconnect"
+Usb.println WiFi.disconnect
 
-usb.println WiFi.config
+Usb.println "WiFi Mode Setting"
+Usb.println WiFi.setMode 3  #Station-Mode & SoftAPI-Mode
 
-usb.println "WiFi disconnect"
-usb.println WiFi.at("CWQAP")
+Usb.println "WiFi ipconfig"
+Usb.println WiFi.ipconfig
+
+Usb.println "WiFi connecting"
+Usb.println WiFi.connect("TAROSAY","37000")
+
+Usb.println "WiFi ipconfig"
+Usb.println WiFi.ipconfig
+
+Usb.println "WiFi disconnect"
+Usb.println WiFi.disconnect
+
