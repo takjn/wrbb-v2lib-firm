@@ -122,7 +122,7 @@ int year, mon;
 
 	TimeRTC.weekday = (year + year/4 - year/100 + year/400 + (13 * mon + 8)/5 + TimeRTC.day) % 7;
 	//TimeRTC.year = TimeRTC.year % 100;
-	
+
     return mrb_fixnum_value(rtc_set_time(&TimeRTC));
 }
 
@@ -154,6 +154,41 @@ mrb_value mrb_rtc_init(mrb_state *mrb, mrb_value self)
 }
 
 //**************************************************
+// UnixTimeを返します: Rtc.unixtime
+//  Rtc.unixtime()
+//**************************************************
+mrb_value mrb_rtc_unixtime(mrb_state *mrb, mrb_value self)
+{
+	unsigned long unix_time = 0;
+
+	if (rtc_get_time(&TimeRTC)) {
+		unsigned int year = TimeRTC.year;
+		unsigned int month = TimeRTC.mon;
+		unsigned int day = TimeRTC.day;
+		unsigned int hour = TimeRTC.hour;
+		unsigned int minute = TimeRTC.min;
+		unsigned int second = TimeRTC.second;
+
+		if (month < 3) {
+			month+=12;
+			year--;
+		}
+
+		#define kEpocDays 719163
+		#define kSecondsInDay 86400
+
+		unsigned int countBy4 = year/4;
+		unsigned int countBy400 = year/400;
+		unsigned int countBy100 = year/100;
+		unsigned int shiftedDay = (306 * (month + 1)) / 10;
+		unsigned long dayCount = (365 * year + countBy4 - countBy100 + countBy400 + shiftedDay + day - 428) - kEpocDays;
+		unix_time = dayCount * kSecondsInDay + (hour * 3600) + (minute * 60) + second;
+	}
+
+	return mrb_fixnum_value( unix_time );
+}
+
+//**************************************************
 // ライブラリを定義します
 //**************************************************
 void rtc_Init(mrb_state *mrb)
@@ -165,6 +200,7 @@ void rtc_Init(mrb_state *mrb)
 	mrb_define_module_function(mrb, rtcModule, "deinit", mrb_rtc_deinit, MRB_ARGS_NONE());
 	mrb_define_module_function(mrb, rtcModule, "setTime", mrb_rtc_setTime, MRB_ARGS_REQ(6));
 	mrb_define_module_function(mrb, rtcModule, "getTime", mrb_rtc_getTime, MRB_ARGS_NONE());
+	mrb_define_module_function(mrb, rtcModule, "unixtime", mrb_rtc_unixtime, MRB_ARGS_NONE());
 
 }
 
