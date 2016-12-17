@@ -28,6 +28,8 @@
 #include "sMem.h"
 #include "sI2c.h"
 #include "sServo.h"
+#include "sSSD1306.h"
+#include "sNeoPixel.h"
 
 #if REALTIMECLOCK
 	#include "sRtc.h"
@@ -58,7 +60,7 @@ bool notFinishFlag = true;
 	//DEBUG_PRINT("mrb_open", "Before");
 	mrb_state *mrb = mrb_open();
 	DEBUG_PRINT("mrb_open", "After");
-	
+
 	if(mrb == NULL){
 		Serial.println( "Can not Open mrb!!" );
 		return false;
@@ -70,6 +72,8 @@ bool notFinishFlag = true;
 	mem_Init(mrb);		//ファイル関連メソッドの設定
 	i2c_Init(mrb);		//I2C関連メソッドの設定
 	servo_Init(mrb);	//サーボ関連メソッドの設定
+	neopixel_Init(mrb);		//NeoPixel関連メソッドの設定
+	ssd1306_Init(mrb);		//SSD1306関連メソッドの設定
 
 	//classtest_Init(mrb);
 
