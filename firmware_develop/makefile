@@ -39,6 +39,7 @@ HEADERFILES = ./wrbb.h ./gr_common/core/Arduino.h ./gr_common/core/binary.h ./gr
 	./wrbb_mruby/sNeoPixel.h
 # GNU_PATH := D:/Renesas/GNURXv14.03-ELF/rx-elf/rx-elf/
 GNU_PATH := /usr/share/gnurx_v14.03_elf-1/
+# GNU_PATH := /Applications/IDE4GR.app/Contents/Java/hardware/tools/gcc-rx/rx-elf/rx-elf/
 GCC_VERSION := 4.8-GNURX_v14.03
 CCINC := $(filter-out -I./wrbb_mruby/include/mruby, $(CCINC)) #string.hの重複を避けるため
 CFLAGS := -Wall -ffunction-sections -fno-function-cse -fsigned-char -fdata-sections -I. -I"$(GNU_PATH)rx-elf\include" -I"$(GNU_PATH)lib\gcc\rx-elf\$(GCC_VERSION)\include" -mno-balign -DGRSAKURA -DARDUINO=100 -DCPPAPP -D__RX_LITTLE_ENDIAN__=1 -O2 -g2 -g -flto -mlittle-endian-data -mcpu=rx600 -m64bit-doubles \
