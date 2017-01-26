@@ -368,11 +368,10 @@ int	mode;
 
 //**************************************************
 // ファイルに含まれる+IPDデータを削除します
-// ipd: ipdデータ列
 // strFname1: 元ファイル
 // strFname2: 削除したファイル
 //**************************************************
-int CutGarbageData(const char *ipd, const char *strFname1, const char *strFname2)
+int CutGarbageData(const char *strFname1, const char *strFname2)
 {
 File fp, fd;
 
@@ -394,17 +393,11 @@ File fp, fd;
 		return 3;
 	}
 
+	#define BUFFER_LENGTH 2048
+	char buffer[BUFFER_LENGTH];
+	int len = 0;
 	int tLED = 0;
-	int ipdLen = strlen(ipd);
-	int cnt;
-	unsigned char c;
-	int rc;
-	bool findFlg = true;
-	unsigned char str[16];
-	int dLen;
-	unsigned long seekCnt = 0;
-	while(true){
-
+	while (true) {
 		//LEDを点滅させる
 #if BOARD == BOARD_GR
 		digitalWrite(PIN_LED0, tLED);
@@ -416,100 +409,29 @@ File fp, fd;
 #endif
 		tLED = 1 - tLED;
 
-		//+IPD文字列を探します
-		cnt = 0;
-		while(true){
-			rc = fp.read();
+		// '\r'が来るまで読み込んで書き出す
+		len = fp.readBytesUntil('\r', buffer, BUFFER_LENGTH);
+		fd.write(buffer, len);
 
-			if(rc < 0){
-				findFlg = false;
-				break;
-			}
-
-			c = (unsigned char)rc;
-			if(ipd[cnt] == c){
-				cnt++;
-				if(cnt == ipdLen){
-					seekCnt += cnt;
-					break;
-				}
-			}
-			else if(c == 0x0D){
-				cnt = 1;
-			}
-			else{
-				cnt = 0;
-			}
+		// '\r'が見つからなかったので続ける
+		if (len == BUFFER_LENGTH) {
+			continue;
 		}
 
-		//Serial.print("findFlg= ");
-		//Serial.println(findFlg);
-
-		if(findFlg == false){	break;	}
-
-		//ここから後はバイト数が来ているはず
-		cnt = 0;
-		while(true){
-
-			rc = fp.read();
-
-			if(rc < 0){
-				findFlg = false;
-				break;
-			}
-			c = (unsigned char)rc;
-
-			str[cnt] = c;
-
-			if(c == ':'){
-				str[cnt] = 0;
-				seekCnt += cnt + 1;
-				break;
-			}
-			else if(cnt >= 15){
-				str[15] = 0;
-				findFlg = false;
-				break;
-			}
-			cnt++;
+		// '\r'が見つかったので、'\n+IPD,'が続く可能性がある。6バイト読み込んでみる。
+		len = fp.readBytes(buffer, 6);
+		if (len<6) {
+			// 6バイトを読み込めなかった場合は、ファイルの最後まで来たので、書き出して終了する
+			fd.write(buffer, len);
+			break;
 		}
-
-		if(findFlg == false){	break;	}
-	
-		//読み込むバイト数を求めます
-		dLen = atoi((const char*)str);
-
-		seekCnt += dLen;
-
-		//Serial.print("dLen= ");
-		//Serial.println((const char*)str);
-
-		while(dLen > 0){
-			if(dLen >= 256){
-				 fp.read(WiFiData, 256);
-
-				 fd.write( WiFiData, 256);
-				 dLen -= 256;
-			}
-			else{
-				 fp.read(WiFiData, dLen);
-				 fd.write( WiFiData, dLen);
-
-				 dLen = 0;
-			}
-		}
-	}
-
-	if(findFlg == false){
-		//処理していないところは、そのまま書きます
-		fp.seek(seekCnt);
-
-		while(true){
-			dLen = fp.read(WiFiData, 256);
-			fd.write(WiFiData, dLen);
-			if(dLen < 256){
-				break;
-			}
+		// '\n+IPD,'であるかをチェックする
+		if (strncmp(buffer, "\n+IPD,", 6)==0) {
+			// '\n+IPD,'が見つかったので、':'が来るまで読み飛ばす
+			len = fp.readBytesUntil(':', buffer, BUFFER_LENGTH);
+		} else {
+			// '\n+IPD,'ではなかったので、読み込んだ6バイトを書き出して続ける
+			fd.write(buffer, len);
 		}
 	}
 
@@ -778,7 +700,7 @@ int sla, koron;
 	//Serial.println("Recv Finish");
 
 	//受信データに '\r\n+\r\n+IPD,4,****:'というデータがあるので削除します
-	int ret = CutGarbageData("\r\n+IPD,4,", tmpFilename, strFname);
+	int ret = CutGarbageData(tmpFilename, strFname);
 	if(ret != 1){
 		return mrb_fixnum_value( 7 );
 	}
@@ -1692,7 +1614,7 @@ int	port = 80;
 			fp.close();
 		
 			//受信データに '\r\n+\r\n+IPD,0,****:'というデータがあるので削除します
-			int ret = CutGarbageData("\r\n+IPD,0,", tmpFilename, headFilename);
+			int ret = CutGarbageData(tmpFilename, headFilename);
 			if(ret != 1){
 				return mrb_fixnum_value( 3 );
 			}
