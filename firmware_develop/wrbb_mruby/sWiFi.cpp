@@ -312,7 +312,7 @@ mrb_value mrb_wifi_bypass(mrb_state *mrb, mrb_value self)
 			for(int i=0; i<len; i++){
 				WiFiData[i] = (unsigned char)RbSerial[WIFI_SERIAL]->read();
 			}
-	        RbSerial[0]->write( WiFiData, len );
+			RbSerial[0]->write( WiFiData, len );
 		}
 	}
 	return mrb_nil_value();			//戻り値は無しですよ。
@@ -660,8 +660,8 @@ char buffer[BUFFER_LENGTH];
 		// '\r'が来るまで読みとばす
 		len = RbSerial[WIFI_SERIAL]->readBytesUntil('\r', buffer, BUFFER_LENGTH);
 		if (len < 0 || len == BUFFER_LENGTH) {
-    		// '\r'が見つからなかったので異常終了する
-            // 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
+			// '\r'が見つからなかったので異常終了する
+			// 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
 			break;
 		}
 
@@ -676,27 +676,27 @@ char buffer[BUFFER_LENGTH];
 		if (strncmp(buffer, "\n+IPD,", 6)==0) {
 			// '\n+IPD,'が見つかったので、まずは、"{id},"を読み飛ばす。
 			len = RbSerial[WIFI_SERIAL]->readBytesUntil(',', buffer, BUFFER_LENGTH);
-            if (len < 0 || len == BUFFER_LENGTH) {
-                // ','が見つからなかった（受信できなかった）ので異常終了する
-                // 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
-                break;
-            }
-            
-            // 次は{bytes}:が来るはず。':'までを読み取り、バイト数文字列を取得する。
+			if (len < 0 || len == BUFFER_LENGTH) {
+				// ','が見つからなかった（受信できなかった）ので異常終了する
+				// 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
+				break;
+			}
+			
+			// 次は{bytes}:が来るはず。':'までを読み取り、バイト数文字列を取得する。
 			len = RbSerial[WIFI_SERIAL]->readBytesUntil(':', buffer, BUFFER_LENGTH);
-            if (len < 0 || len == BUFFER_LENGTH) {
-                // ':'が見つからなかった（受信できなかった）ので異常終了する
-                // 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
-                break;
-            }
-            buffer[len] = '\0'; // null文字で終わらせて文字列にする
+			if (len < 0 || len == BUFFER_LENGTH) {
+				// ':'が見つからなかった（受信できなかった）ので異常終了する
+				// 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
+				break;
+			}
+			buffer[len] = '\0'; // null文字で終わらせて文字列にする
 
-            // 受信したバイト数の文字列を数値に変換する
-            int bytes = atoi(buffer);
+			// 受信したバイト数の文字列を数値に変換する
+			int bytes = atoi(buffer);
 
 
-            // +IPD,{id},{bytes}:で教えてもらったバイト数の分だけ、読み込んで書き出す
-            while (bytes > 0) {
+			// +IPD,{id},{bytes}:で教えてもらったバイト数の分だけ、読み込んで書き出す
+			while (bytes > 0) {
 				//LEDを点灯する
 #if BOARD == BOARD_GR
 				digitalWrite(PIN_LED0, HIGH);
@@ -707,13 +707,13 @@ char buffer[BUFFER_LENGTH];
 				digitalWrite(RB_LED, HIGH);
 #endif
 				// バッファにデータを読み込む
-                int b = (bytes < BUFFER_LENGTH) ? bytes : BUFFER_LENGTH;
-    			len = RbSerial[WIFI_SERIAL]->readBytes(buffer, b);
+				int b = (bytes < BUFFER_LENGTH) ? bytes : BUFFER_LENGTH;
+				len = RbSerial[WIFI_SERIAL]->readBytes(buffer, b);
 				// Serial.write(buffer, len);	//デバッグ用
-                if (b != len) {
-                    // 異常終了（通信やESP8266の動作が不安定）
-                    break;
-                }
+				if (b != len) {
+					// 異常終了（通信やESP8266の動作が不安定）
+					break;
+				}
 				//LEDを消灯する
 #if BOARD == BOARD_GR
 				digitalWrite(PIN_LED0, LOW);
@@ -725,8 +725,8 @@ char buffer[BUFFER_LENGTH];
 #endif
 				// バッファに読み込んだデータを書き出す
 				fp.write(buffer, len);
-                bytes -= len;
-            }
+				bytes -= len;
+			}
 		} else {
 			// '\n+IPD,'ではなかった。少なくともデータの受信は終わってしまった。（＝データの受信が'ERROR'で終了したはず）
 			break;
