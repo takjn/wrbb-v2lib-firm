@@ -31,6 +31,7 @@ extern HardwareSerial *RbSerial[];		//0:Serial(USB), 1:Serial1, 2:Serial3, 3:Ser
 #define  WIFI_BAUDRATE	115200
 //#define  WIFI_CTS		15
 #define  WIFI_WAIT_MSEC	10000
+#define  BUFFER_LENGTH  2048 //ESP8266からの受信バッファの大きさ
 
 unsigned char WiFiData[256];
 int WiFiRecvOutlNum = -1;	//ESP8266からの受信を出力するシリアル番号: -1の場合は出力しない。
@@ -393,7 +394,6 @@ File fp, fd;
 		return 3;
 	}
 
-	#define BUFFER_LENGTH 2048
 	char buffer[BUFFER_LENGTH];
 	int len = 0;
 	int tLED = 0;
@@ -469,12 +469,12 @@ File fp, fd;
 mrb_value mrb_wifi_getSD(mrb_state *mrb, mrb_value self)
 {
 mrb_value vFname, vURL, vHeaders;
-const char *tmpFilename = "wifitmp.tmp";
 const char *hedFilename = "hedrfile.tmp";
 char	*strFname, *strURL;
 int len = 0;
 File fp, fd;
 int sla, koron;
+char buffer[BUFFER_LENGTH];
 
 	//SDカードが利用可能か確かめます
 	if(!sdcard_Init(mrb)){
@@ -629,7 +629,7 @@ int sla, koron;
 		}
 		fp.close();
 
-		SD.remove(tmpFilename);		//受信するためファイルを事前に消している
+		SD.remove(strFname);		//受信するためファイルを事前に消している
 
 		//OK 0d0a か ERROR 0d0aが来るまで WiFiData[]に読むか、指定されたシリアルポートに出力します
 		getData(WIFI_WAIT_MSEC);
@@ -643,14 +643,9 @@ int sla, koron;
 	//****** 送信終了 ******
 
 	//****** 受信開始 ******
-	if( !(fp = SD.open(tmpFilename, FILE_WRITE)) ){
+	if( !(fp = SD.open(strFname, FILE_WRITE)) ){
 		return mrb_fixnum_value( 6 );
 	}
-
-	unsigned long times;
-	unsigned int wait_msec = WIFI_WAIT_MSEC;
-	unsigned char recv[2];
-	times = millis();
 
 #if BOARD == BOARD_GR
 	int led = digitalRead(PIN_LED0) | ( digitalRead(PIN_LED1)<<1) | (digitalRead(PIN_LED2)<<2)| (digitalRead(PIN_LED3)<<3);
@@ -658,52 +653,91 @@ int sla, koron;
 	int led = digitalRead(RB_LED);
 #endif
 
-	while(true){
-		//wait_msec 待つ
-		if(millis() - times > wait_msec){
+	// "\r\n+IPD,{id},{bytes}:" が来る間は、データを受信して書き出す
+	// readBytesUntil にはタイムアウト（1秒）があるので、途中で受信ができなくなってしまっても途中で抜けるはず
+	while (true) {
+
+		// '\r'が来るまで読みとばす
+		len = RbSerial[WIFI_SERIAL]->readBytesUntil('\r', buffer, BUFFER_LENGTH);
+		if (len < 0 || len == BUFFER_LENGTH) {
+    		// '\r'が見つからなかったので異常終了する
+            // 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
 			break;
 		}
 
-		while(len = RbSerial[WIFI_SERIAL]->available())
-		{
-			//LEDを点灯する
-#if BOARD == BOARD_GR
-			digitalWrite(PIN_LED0, HIGH);
-			digitalWrite(PIN_LED1, HIGH);
-			digitalWrite(PIN_LED2, HIGH);
-			digitalWrite(PIN_LED3, HIGH);
-#else
-			digitalWrite(RB_LED, HIGH);
-#endif
-			for(int i=0; i<len; i++){
-				recv[0] = (unsigned char)RbSerial[WIFI_SERIAL]->read();
-				fp.write( (unsigned char*)recv, 1);
-			}
-			times = millis();
-			wait_msec = 1000;	//データが届き始めたら、1sec待ちに変更する
+		// '\r'が見つかったので、'\n+IPD,'が続く可能性がある。6バイト読み込んでみる。
+		len = RbSerial[WIFI_SERIAL]->readBytes(buffer, 6);
+		if (len < 6) {
+			// 6バイトを読み込めなかった場合は、少なくとも'\n+IPD,' ではないのでデータの受信は終わった。（＝データの受信が'OK'で終了したはず）
+			break;
+		}
 
-			//LEDを消灯する
+		// '\n+IPD,{id},{bytes}:'であるかをチェックする
+		if (strncmp(buffer, "\n+IPD,", 6)==0) {
+			// '\n+IPD,'が見つかったので、まずは、"{id},"を読み飛ばす。
+			len = RbSerial[WIFI_SERIAL]->readBytesUntil(',', buffer, BUFFER_LENGTH);
+            if (len < 0 || len == BUFFER_LENGTH) {
+                // ','が見つからなかった（受信できなかった）ので異常終了する
+                // 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
+                break;
+            }
+            
+            // 次は{bytes}:が来るはず。':'までを読み取り、バイト数文字列を取得する。
+			len = RbSerial[WIFI_SERIAL]->readBytesUntil(':', buffer, BUFFER_LENGTH);
+            if (len < 0 || len == BUFFER_LENGTH) {
+                // ':'が見つからなかった（受信できなかった）ので異常終了する
+                // 異常（通信やESP8266の動作が不安定）が発生しない限り、ここには来ないはず
+                break;
+            }
+            buffer[len] = '\0'; // null文字で終わらせて文字列にする
+
+            // 受信したバイト数の文字列を数値に変換する
+            int bytes = atoi(buffer);
+
+
+            // +IPD,{id},{bytes}:で教えてもらったバイト数の分だけ、読み込んで書き出す
+            while (bytes > 0) {
+				//LEDを点灯する
 #if BOARD == BOARD_GR
-			digitalWrite(PIN_LED0, LOW);
-			digitalWrite(PIN_LED1, LOW);
-			digitalWrite(PIN_LED2, LOW);
-			digitalWrite(PIN_LED3, LOW);
+				digitalWrite(PIN_LED0, HIGH);
+				digitalWrite(PIN_LED1, HIGH);
+				digitalWrite(PIN_LED2, HIGH);
+				digitalWrite(PIN_LED3, HIGH);
 #else
-			digitalWrite(RB_LED, LOW);
+				digitalWrite(RB_LED, HIGH);
 #endif
+				// バッファにデータを読み込む
+                int b = (bytes < BUFFER_LENGTH) ? bytes : BUFFER_LENGTH;
+    			len = RbSerial[WIFI_SERIAL]->readBytes(buffer, b);
+				// Serial.write(buffer, len);	//デバッグ用
+                if (b != len) {
+                    // 異常終了（通信やESP8266の動作が不安定）
+                    break;
+                }
+				//LEDを消灯する
+#if BOARD == BOARD_GR
+				digitalWrite(PIN_LED0, LOW);
+				digitalWrite(PIN_LED1, LOW);
+				digitalWrite(PIN_LED2, LOW);
+				digitalWrite(PIN_LED3, LOW);
+#else
+				digitalWrite(RB_LED, LOW);
+#endif
+				// バッファに読み込んだデータを書き出す
+				fp.write(buffer, len);
+                bytes -= len;
+            }
+		} else {
+			// '\n+IPD,'ではなかった。少なくともデータの受信は終わってしまった。（＝データの受信が'ERROR'で終了したはず）
+			break;
 		}
 	}
+
 	fp.flush();
 	fp.close();
 
 	//****** 受信終了 ******
 	//Serial.println("Recv Finish");
-
-	//受信データに '\r\n+\r\n+IPD,4,****:'というデータがあるので削除します
-	int ret = CutGarbageData(tmpFilename, strFname);
-	if(ret != 1){
-		return mrb_fixnum_value( 7 );
-	}
 
 	//****** AT+CIPCLOSE コマンド ******
 	RbSerial[WIFI_SERIAL]->println("AT+CIPCLOSE=4");
