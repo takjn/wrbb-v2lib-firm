@@ -33,6 +33,7 @@
 #include "sGlobal.h"
 #include "sSSD1306.h"
 #include "sNeoPixel.h"
+#include "sBME280.h"
 
 
 #if BOARD == BOARD_GR || FIRMWARE == SDBT || FIRMWARE == SDWF || BOARD == BOARD_P05 || BOARD == BOARD_P06
@@ -107,6 +108,7 @@ bool RubyRun(void)
 	servo_Init(mrb);	//サーボ関連メソッドの設定
 	neopixel_Init(mrb);	//NeoPixel関連メソッドの設定
 	ssd1306_Init(mrb);	//SSD1306関連メソッドの設定
+	bme280_Init(mrb);	//BME280関連メソッドの設定
 
 	//classtest_Init(mrb);
 
