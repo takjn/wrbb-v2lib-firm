@@ -1,0 +1,10 @@
+{
+  "name": {
+    "en": "wrbb-v2lib-firm"
+  },
+  "description": {
+    "en": "This is the V2 library firmware of GR-CITRUS provided by Wakayama.rb.",
+    "ja": "Wakayama.rbが提供するGR-CITRUSのV2ライブラリファームウェアです。"
+  },
+  "preview": false
+}

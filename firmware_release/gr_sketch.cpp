@@ -120,16 +120,21 @@ void setup()
 	pinModeInit();
 
 	//シリアル通信の初期化
-	Serial.begin(115200);		//仮想USBシリアル
-    //Serial.setDefault();
-	//sci_convert_crlf_ex(Serial.get_handle(), CRLF_NONE, CRLF_NONE);	//バイナリを通せるようにする
+	bool isUsbConnect = Serial.begin(115200, SERIAL_8N1);		//仮想USBシリアル
+
+	//Rubyコード領域をヒープから確保します
+	getRubyCodeArea(RUBY_CODE_SIZE);		//このsetup()は、リセット時に一回しか通らないので、freeしなくてもいい。
 
 	//vmの初期化
 	init_vm();
 
-	//Port 3-5がHIGHだったら、EEPROMファイルローダーに飛ぶ
-	if( FILE_LOAD == 1 ){
-		fileloader((const char*)ProgVer,MRUBY_VERSION);
+	//Port 3-5がHIGH、またはUSBシリアルが未接続だったら、EEPROMファイルローダーに飛ぶ
+	if( FILE_LOAD == 1 && isUsbConnect){
+		while (true){
+			if (fileloader((const char*)ProgVer, MRUBY_VERSION)){
+				break;
+			}
+		}
 	}
 }
 
@@ -141,6 +146,10 @@ void loop()
 	if( RubyRun()==false ){
 
 		DEBUG_PRINT("RubyRun", "FALSE");
-		fileloader((const char*)ProgVer,MRUBY_VERSION);
+		while (true){
+			if (fileloader((const char*)ProgVer, MRUBY_VERSION)){
+				break;
+			}
+		}
 	}
 }

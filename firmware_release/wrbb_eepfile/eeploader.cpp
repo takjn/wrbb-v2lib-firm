@@ -23,10 +23,7 @@
 #define COMMAND_LENGTH	32
 
 extern char RubyFilename[];
-extern uint8_t RubyCode[];
 
-
-char *WriteData = (char*)RubyCode;
 char CommandData[COMMAND_LENGTH];
 bool StopFlg = false;				//強制終了フラグ
 bool AutoPrintSwitchFlg = true;		//'>'の自動送信フラグ
@@ -110,6 +107,7 @@ int waitRcv(int msec){
 	unsigned long tm = millis() + msec;
 	int sa = 0;
 
+	USB_Serial->clearBreakState();		//ブレーク信号のクリア
 	USB_Serial->print("Waiting ");
 	while(tm > millis()){
 		if (USB_Serial->available() > 0){
@@ -119,6 +117,10 @@ int waitRcv(int msec){
 			sa = (int)(tm - millis()) / 1000;
 			USB_Serial->print(" ");
 			USB_Serial->print(sa, 10);
+		}
+		if (USB_Serial->isBreakState()){
+			USB_Serial->println("..Break!");
+			return 0;
 		}
 	}
 	USB_Serial->println("..Wait Error!");
@@ -181,9 +183,9 @@ bool writefile(const char *fname, int size, char code, char *readData)
 
 	if(binsize <= 0){ return result; }
 
-	if(binsize>=RUBY_CODE_SIZE && (code == 'X' || code == 'V')){
-		return result;
-	}
+	//if(binsize>=RUBY_CODE_SIZE && (code == 'X' || code == 'V')){
+	//	return result;
+	//}
 
 	USB_Serial->println();
 
@@ -232,6 +234,7 @@ bool writefile(const char *fname, int size, char code, char *readData)
 		return result;
 	}
 
+	USB_Serial->clearBreakState();		//ブレーク信号のクリア
 	result = true;
 	for(int i=0; i<binsize; i++){
 		//b2aFlgが 0 のときはバイナリ、1 のときはバイナリが2バイトテキストで送られてくる
@@ -252,11 +255,18 @@ bool writefile(const char *fname, int size, char code, char *readData)
 		if((i % 256) == 0){
 			USB_Serial->print(".");
 		}
+
+		if (USB_Serial->isBreakState()){
+			USB_Serial->println("..Break!");
+			result = false;
+			break;
+		}
 	}
 	EEP.fclose(fp);
 
-	USB_Serial->println(".");
-	
+	if (result){
+		USB_Serial->println(".");
+	}
 	return result;
 }
 
@@ -311,7 +321,8 @@ void readfile(const char *fname, char code)
 		return;
 	}
 
-	for(int i=0; i<binsize; i++){
+	USB_Serial->clearBreakState();		//ブレーク信号のクリア
+	for (int i = 0; i<binsize; i++){
 
 		if(code == 'G'){
 			USB_Serial->write((unsigned char)EEP.fread(fp));
@@ -322,6 +333,10 @@ void readfile(const char *fname, char code)
 				USB_Serial->print("0");
 			}
 			USB_Serial->print(bin, 16);
+		}
+
+		if (USB_Serial->isBreakState()){
+			break;
 		}
 	}
 	EEP.fclose(fp);
@@ -360,6 +375,7 @@ int fileloader(const char* str0, const char* str1)
 #else
 		digitalWrite(RB_LED, HIGH);
 #endif
+
 		//コマンド待ち
 		USB_Serial->println();
 		USB_Serial->print("WAKAYAMA.RB Board Ver.");
@@ -521,9 +537,12 @@ int fileloader(const char* str0, const char* str1)
 			}
 		}
 		else if(CommandData[0] == 'E'){
-			//ファームウェア書き込み待ちにする
 			system_reboot( REBOOT_USERAPP );	//リセット後にユーザアプリを起動する
 			//system_reboot( REBOOT_FIRMWARE );	//リセット後にファームウェアを起動する
+		}
+		else if (CommandData[0] == 'M'){
+			//ファームウェア書き込み待ちにする
+			system_reboot( REBOOT_FIRMWARE );	//リセット後にファームウェアを起動する
 		}
 		else if (CommandData[0] == 'L'){
 			USB_Serial->println();
@@ -571,7 +590,7 @@ int fileloader(const char* str0, const char* str1)
 		}
 		else{
 			USB_Serial->println();
-			USB_Serial->println("EEPROM FileWriter Ver. 1.75.v2");
+			USB_Serial->println("EEPROM FileWriter Ver. 1.78.v2");
 			USB_Serial->println(" Command List");
 			USB_Serial->println(" L:List Filename..........>L [ENTER]");
 			USB_Serial->println(" W:Write File.............>W Filename Size [ENTER]");
@@ -586,6 +605,7 @@ int fileloader(const char* str0, const char* str1)
 			USB_Serial->println(" .:Repeat.................>. [ENTER]");
 			USB_Serial->println(" Q:Quit...................>Q [ENTER]");
 			USB_Serial->println(" E:System Reset...........>E [ENTER]");
+			USB_Serial->println(" M:Drive Mount............>M [ENTER]");
 			USB_Serial->println(" U:Write File B2A.........>U Filename Size [ENTER]");
 			USB_Serial->println(" T:'>'Auto Print Switch...>T [ENTER]");
 			//USB_Serial->println(" V:Execute File B2A.......>V Filename Size [ENTER]");

@@ -11,9 +11,16 @@
 #include <util.h>
 
 #include <mruby.h>
+#include <mruby/string.h>
+#include <mruby/array.h>
 
 #include "../wrbb.h"
 
+#ifndef ABORT_DELAY_POLLING_MS
+#define ABORT_DELAY_POLLING_MS	100
+#endif
+
+extern HardwareSerial *USB_Serial;
 
 //**************************************************
 // デジタルライト
@@ -74,8 +81,18 @@ int value;
 	//試しに強制gcを入れて見る
 	mrb_full_gc(mrb);
 
-	if(value >0 ){
-		delay( value );
+	while(value > 0){
+		if(value > ABORT_DELAY_POLLING_MS){
+			delay( ABORT_DELAY_POLLING_MS );
+			value -= ABORT_DELAY_POLLING_MS;
+		} else {
+			delay( value );
+			value = 0;
+		}
+		if (USB_Serial->isBreakState()){
+			// 長いdelayの途中に強制終了指示があった場合、delayを中断する
+			mrb_raise(mrb, E_RUNTIME_ERROR, "delay aborted");
+		}
 	}
 
 	return mrb_nil_value();			//戻り値は無しですよ。
@@ -201,7 +218,7 @@ int pin, value;
 
 	mrb_get_args(mrb, "ii", &pin, &value);
 
-	if(pin == 4 || pin >= 20){
+	if(pin >= 20){
 		return mrb_nil_value();			//戻り値は無しですよ。
 	}
 
@@ -239,7 +256,7 @@ int pin;
 
 	mrb_get_args(mrb, "i", &pin);
 
-	if(pin == 4 || pin >= 20){
+	if(pin >= 20){
 		return mrb_nil_value();			//戻り値は無しですよ。
 	}
 
@@ -263,7 +280,7 @@ unsigned long dura;
 
 	int n = mrb_get_args(mrb, "ii|i", &pin, &freq, &dura);
 
-	if(pin == 4 || pin >= 20){
+	if(pin >= 20){
 		return mrb_nil_value();			//戻り値は無しですよ。
 	}
 
@@ -305,13 +322,17 @@ int value;
 
 //**************************************************
 // LEDオンオフ: led
-//	led(sw)
+//	led([sw])
 //**************************************************
 mrb_value mrb_kernel_led(mrb_state *mrb, mrb_value self)
 {
 int value;
 
-	mrb_get_args(mrb, "i", &value);
+	int n = mrb_get_args(mrb, "|i", &value);
+	
+	if (n == 0) {
+		value = 1 - digitalRead(RB_LED);
+	}
 
 #if BOARD == BOARD_GR
 	digitalWrite( PIN_LED0, value & 1 );
@@ -361,6 +382,106 @@ long value1,value2;
 }
 
 //**************************************************
+// putsの再帰呼び出し部
+//**************************************************
+void putsRecursible(mrb_state *mrb, mrb_value value)
+{
+	if (mrb_array_p(value)){
+		int len = RARRAY_LEN(value);
+		for (int i = 0; i < len; i++){
+			putsRecursible(mrb, mrb_ary_ref(mrb, value, i));
+		}
+	}
+	else if (mrb_fixnum_p(value)){
+		USB_Serial->println(mrb_fixnum(value));
+	}
+	else if (mrb_float_p(value)){
+		USB_Serial->println(mrb_float(value), 7);
+	}
+	else if (mrb_string_p(value)){
+		USB_Serial->println(RSTRING_PTR(value));
+	}
+	else if (mrb_nil_p(value)){
+		USB_Serial->println("nil");
+	}
+	else if (mrb_bool(value)){
+		USB_Serial->println(mrb_bool(value));
+	}
+	else{
+		USB_Serial->println(0);
+	}
+}
+
+//**************************************************
+// USBシリアルに文字を出力: puts
+//	puts([object])
+//**************************************************
+mrb_value mrb_kernel_puts(mrb_state *mrb, mrb_value self)
+{
+	mrb_value value;
+
+	int n = mrb_get_args(mrb, "|o", &value);
+
+	if (n == 0) {
+		USB_Serial->println("");
+		return mrb_nil_value();			//戻り値は無しですよ。
+	}
+
+	//puts処理部分です中で再帰呼び出ししています
+	putsRecursible(mrb, value);
+
+	return mrb_nil_value();			//戻り値は無しですよ。
+}
+
+//**************************************************
+// パルスの長さを測ります: pulseIn
+//	pulseIn(pin, val[,timeout])
+//  pin: ピン番号
+//  val: 測定するパルスの種類。HIGHまたはLOW
+//  timeout : タイムアウトまでの時間(単位・マイクロ秒)。デフォルトは1秒
+//
+//戻り値
+//  パルスの長さ[us](unsigned long)。パルスがスタートする前にタイムアウトとなった場合は0。
+//**************************************************
+mrb_value mrb_kernel_pulseIn(mrb_state *mrb, mrb_value self)
+{
+	int pin;
+	int val;
+	unsigned long timeouttime;
+	unsigned long pw = 0;
+
+	int n = mrb_get_args(mrb, "ii|i", &pin, &val, &timeouttime);
+
+	if (pin >= 20){
+		return mrb_fixnum_value(0);
+	}
+
+	if (n < 3){
+		pw = pulseIn(pin, val);
+	}
+	else{
+		pw = pulseIn(pin, val, timeouttime);
+	}
+	return mrb_fixnum_value(pw);
+}
+
+//**************************************************
+// 指定した時間の一時停止: delayMicroseconds
+//  delayMicroseconds(us)
+//  us : 一時停止する時間(単位・マイクロ秒)
+//**************************************************
+mrb_value mrb_kernel_delayMicroseconds(mrb_state *mrb, mrb_value self)
+{
+unsigned long us;
+
+	mrb_get_args(mrb, "i", &us);
+
+	delayMicroseconds(us);
+
+	return mrb_nil_value();			//戻り値は無しですよ。
+}
+
+//**************************************************
 // 隠しコマンドです:  El_Psy.Congroo
 //	El_Psy.Congroo()
 //**************************************************
@@ -395,11 +516,16 @@ void kernel_Init(mrb_state *mrb)
 	mrb_define_method(mrb, mrb->kernel_module, "delay", mrb_kernel_delay, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, mrb->kernel_module, "millis", mrb_kernel_millis, MRB_ARGS_NONE());
 	mrb_define_method(mrb, mrb->kernel_module, "micros", mrb_kernel_micros, MRB_ARGS_NONE());
+	mrb_define_method(mrb, mrb->kernel_module, "delayMicroseconds", mrb_kernel_delayMicroseconds, MRB_ARGS_REQ(1));
 
-	mrb_define_method(mrb, mrb->kernel_module, "led", mrb_kernel_led, MRB_ARGS_REQ(1));
+	mrb_define_method(mrb, mrb->kernel_module, "led", mrb_kernel_led, MRB_ARGS_OPT(1));
 
 	mrb_define_method(mrb, mrb->kernel_module, "randomSeed", mrb_kernel_randomSeed, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, mrb->kernel_module, "random", mrb_kernel_random, MRB_ARGS_REQ(1)|MRB_ARGS_OPT(1));
+
+	mrb_define_method(mrb, mrb->kernel_module, "pulseIn", mrb_kernel_pulseIn, MRB_ARGS_REQ(2) | MRB_ARGS_OPT(1));
+
+	mrb_define_method(mrb, mrb->kernel_module, "puts", mrb_kernel_puts, MRB_ARGS_OPT(1));
 
 	struct RClass *El_PsyModule = mrb_define_module(mrb, "El_Psy");
 	mrb_define_module_function(mrb, El_PsyModule, "Congroo", mrb_El_Psy_congroo, MRB_ARGS_NONE());
