@@ -24,17 +24,14 @@
 #include "../wrbb.h"
 
 // OLED
-#define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
+Adafruit_SSD1306 display(-1);
 
 mrb_value mrb_gfx_begin(mrb_state *mrb, mrb_value self)
 {
-	int i2c_addr;
+	int i2c_addr, wire = 0;
 
-	mrb_get_args(mrb, "i", &i2c_addr);
-	pinMode(RB_PIN18, OUTPUT);
-	pinMode(RB_PIN19, OUTPUT);
-	display.begin(SSD1306_SWITCHCAPVCC, i2c_addr);
+	mrb_get_args(mrb, "i|i", &i2c_addr, &wire);
+	display.begin(SSD1306_SWITCHCAPVCC, i2c_addr, false, wire);
 	display.setTextColor(WHITE);
 	display.setFont(&acknowtt7pt7b);
 
@@ -158,7 +155,7 @@ void ssd1306_Init(mrb_state* mrb) {
 
 	struct RClass *ssd1306Module = mrb_define_module(mrb, "Ssd1306");
 
-	mrb_define_module_function(mrb, ssd1306Module, "begin", mrb_gfx_begin, MRB_ARGS_REQ(1));
+	mrb_define_module_function(mrb, ssd1306Module, "begin", mrb_gfx_begin, MRB_ARGS_ARG(1,1));
 	mrb_define_module_function(mrb, ssd1306Module, "clear_display", mrb_gfx_clearDisplay, MRB_ARGS_NONE());
 	mrb_define_module_function(mrb, ssd1306Module, "display", mrb_gfx_display, MRB_ARGS_NONE());
 	mrb_define_module_function(mrb, ssd1306Module, "set_cursor", mrb_gfx_setCursor, MRB_ARGS_REQ(2));

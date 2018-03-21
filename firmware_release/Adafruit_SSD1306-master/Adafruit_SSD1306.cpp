@@ -168,7 +168,7 @@ Adafruit_GFX(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT) {
 }
 
 
-void Adafruit_SSD1306::begin(uint8_t vccstate, uint8_t i2caddr, bool reset) {
+void Adafruit_SSD1306::begin(uint8_t vccstate, uint8_t i2caddr, bool reset, int8_t w) {
   _vccstate = vccstate;
   _i2caddr = i2caddr;
 
@@ -205,7 +205,35 @@ void Adafruit_SSD1306::begin(uint8_t vccstate, uint8_t i2caddr, bool reset) {
   else
   {
     // I2C Init
-    Wire.begin();
+    switch (w) {
+      case 1:
+        wire = &Wire1;
+        pinMode(0, OUTPUT);
+        pinMode(1, OUTPUT);
+        break;
+      case 2:
+        wire = &Wire2;
+        pinMode(5, OUTPUT);
+        pinMode(6, OUTPUT);
+        break;
+      case 3:
+        wire = &Wire3;
+        pinMode(7, OUTPUT);
+        pinMode(8, OUTPUT);
+        break;
+      case 4:
+        wire = &Wire4;
+        pinMode(11, OUTPUT);
+        pinMode(12, OUTPUT);
+        break;
+      default:
+        wire = &Wire;
+        pinMode(18, OUTPUT);
+        pinMode(19, OUTPUT);
+        break;
+    }
+
+    wire->begin();
 #ifdef __SAM3X8E__
     // Force 400 KHz I2C, rawr! (Uses pins 20, 21 for SDA, SCL)
     TWI1->TWI_CWGR = 0;
@@ -322,10 +350,10 @@ void Adafruit_SSD1306::ssd1306_command(uint8_t c) {
   {
     // I2C
     uint8_t control = 0x00;   // Co = 0, D/C = 0
-    Wire.beginTransmission(_i2caddr);
-    Wire.write(control);
-    Wire.write(c);
-    Wire.endTransmission();
+    wire->beginTransmission(_i2caddr);
+    wire->write(control);
+    wire->write(c);
+    wire->endTransmission();
   }
 }
 
@@ -471,14 +499,14 @@ void Adafruit_SSD1306::display(void) {
     // I2C
     for (uint16_t i=0; i<(SSD1306_LCDWIDTH*SSD1306_LCDHEIGHT/8); i++) {
       // send a bunch of data in one xmission
-      Wire.beginTransmission(_i2caddr);
-      WIRE_WRITE(0x40);
+      wire->beginTransmission(_i2caddr);
+      wire->write(0x40);
       for (uint8_t x=0; x<16; x++) {
-        WIRE_WRITE(buffer[i]);
+        wire->write(buffer[i]);
         i++;
       }
       i--;
-      Wire.endTransmission();
+      wire->endTransmission();
     }
 #ifdef TWBR
     TWBR = twbrbackup;
