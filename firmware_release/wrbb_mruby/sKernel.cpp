@@ -106,7 +106,7 @@ int value;
 //	起動してからのミリ秒数
 //**************************************************
 mrb_value mrb_kernel_millis(mrb_state *mrb, mrb_value self)
-{	
+{
 	return mrb_fixnum_value( (mrb_int)millis() );
 }
 
@@ -125,7 +125,7 @@ mrb_value mrb_kernel_micros(mrb_state *mrb, mrb_value self)
 // デジタルリード: digitalRead
 //	digitalRead(pin)
 //	pin: ピンの番号
-//	
+//
 //		0:LOW
 //		1:HIGH
 //**************************************************
@@ -174,7 +174,7 @@ int mode;
 // アナログリード: analogRead
 //	analogRead(pin)
 //	pin: アナログの番号
-//	
+//
 //		10ビットの値(0～1023)
 //**************************************************
 mrb_value mrb_kernel_analogRead(mrb_state *mrb, mrb_value self)
@@ -329,7 +329,7 @@ mrb_value mrb_kernel_led(mrb_state *mrb, mrb_value self)
 int value;
 
 	int n = mrb_get_args(mrb, "|i", &value);
-	
+
 	if (n == 0) {
 		value = 1 - digitalRead(RB_LED);
 	}
@@ -506,29 +506,29 @@ void kernel_Init(mrb_state *mrb)
 	mrb_define_method(mrb, mrb->kernel_module, "analogReference", mrb_kernel_analogReference, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, mrb->kernel_module, "analogRead", mrb_kernel_analogRead, MRB_ARGS_REQ(1));
 
-	mrb_define_method(mrb, mrb->kernel_module, "tone", mrb_kernel_tone, MRB_ARGS_REQ(2)|MRB_ARGS_OPT(1));
-	mrb_define_method(mrb, mrb->kernel_module, "noTone", mrb_kernel_noTone, MRB_ARGS_REQ(1));
+	// mrb_define_method(mrb, mrb->kernel_module, "tone", mrb_kernel_tone, MRB_ARGS_REQ(2)|MRB_ARGS_OPT(1));
+	// mrb_define_method(mrb, mrb->kernel_module, "noTone", mrb_kernel_noTone, MRB_ARGS_REQ(1));
 
-	//mrb_define_method(mrb, mrb->kernel_module, "pwmHz", mrb_kernel_pwmHz, MRB_ARGS_REQ(1));
-	mrb_define_method(mrb, mrb->kernel_module, "initDac", mrb_kernel_initDac, MRB_ARGS_NONE());
-	mrb_define_method(mrb, mrb->kernel_module, "analogDac", mrb_kernel_analogDac, MRB_ARGS_REQ(1));
+	// //mrb_define_method(mrb, mrb->kernel_module, "pwmHz", mrb_kernel_pwmHz, MRB_ARGS_REQ(1));
+	// mrb_define_method(mrb, mrb->kernel_module, "initDac", mrb_kernel_initDac, MRB_ARGS_NONE());
+	// mrb_define_method(mrb, mrb->kernel_module, "analogDac", mrb_kernel_analogDac, MRB_ARGS_REQ(1));
 
 	mrb_define_method(mrb, mrb->kernel_module, "delay", mrb_kernel_delay, MRB_ARGS_REQ(1));
-	mrb_define_method(mrb, mrb->kernel_module, "millis", mrb_kernel_millis, MRB_ARGS_NONE());
-	mrb_define_method(mrb, mrb->kernel_module, "micros", mrb_kernel_micros, MRB_ARGS_NONE());
-	mrb_define_method(mrb, mrb->kernel_module, "delayMicroseconds", mrb_kernel_delayMicroseconds, MRB_ARGS_REQ(1));
+	// mrb_define_method(mrb, mrb->kernel_module, "millis", mrb_kernel_millis, MRB_ARGS_NONE());
+	// mrb_define_method(mrb, mrb->kernel_module, "micros", mrb_kernel_micros, MRB_ARGS_NONE());
+	// mrb_define_method(mrb, mrb->kernel_module, "delayMicroseconds", mrb_kernel_delayMicroseconds, MRB_ARGS_REQ(1));
 
 	mrb_define_method(mrb, mrb->kernel_module, "led", mrb_kernel_led, MRB_ARGS_OPT(1));
 
-	mrb_define_method(mrb, mrb->kernel_module, "randomSeed", mrb_kernel_randomSeed, MRB_ARGS_REQ(1));
-	mrb_define_method(mrb, mrb->kernel_module, "random", mrb_kernel_random, MRB_ARGS_REQ(1)|MRB_ARGS_OPT(1));
+	// mrb_define_method(mrb, mrb->kernel_module, "randomSeed", mrb_kernel_randomSeed, MRB_ARGS_REQ(1));
+	// mrb_define_method(mrb, mrb->kernel_module, "random", mrb_kernel_random, MRB_ARGS_REQ(1)|MRB_ARGS_OPT(1));
 
-	mrb_define_method(mrb, mrb->kernel_module, "pulseIn", mrb_kernel_pulseIn, MRB_ARGS_REQ(2) | MRB_ARGS_OPT(1));
+	// mrb_define_method(mrb, mrb->kernel_module, "pulseIn", mrb_kernel_pulseIn, MRB_ARGS_REQ(2) | MRB_ARGS_OPT(1));
 
 	mrb_define_method(mrb, mrb->kernel_module, "puts", mrb_kernel_puts, MRB_ARGS_OPT(1));
 
-	struct RClass *El_PsyModule = mrb_define_module(mrb, "El_Psy");
-	mrb_define_module_function(mrb, El_PsyModule, "Congroo", mrb_El_Psy_congroo, MRB_ARGS_NONE());
+	// struct RClass *El_PsyModule = mrb_define_module(mrb, "El_Psy");
+	// mrb_define_module_function(mrb, El_PsyModule, "Congroo", mrb_El_Psy_congroo, MRB_ARGS_NONE());
 
 
 

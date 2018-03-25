@@ -27,9 +27,9 @@
 	#include "sWiFi.h"
 #endif
 
-#if BOARD == BOARD_GR || FIRMWARE == SDBT || FIRMWARE == SDWF || BOARD == BOARD_P05 || (BOARD == BOARD_P06 && FIRMWARE == CITRUS)
-	#include "sMp3.h"
-#endif
+// #if BOARD == BOARD_GR || FIRMWARE == SDBT || FIRMWARE == SDWF || BOARD == BOARD_P05 || (BOARD == BOARD_P06 && FIRMWARE == CITRUS)
+// 	#include "sMp3.h"
+// #endif
 
 #define EEPROMADDRESS	0xFF
 
@@ -242,33 +242,33 @@ mrb_value mrb_system_useWiFi(mrb_state *mrb, mrb_value self)
 	return Is_useWiFi(mrb, self, 0);
 }
 
-//**************************************************
-// MP3再生を行えるようにします
-//**************************************************
-mrb_value Is_useMp3(mrb_state *mrb, mrb_value self, int mode)
-{
-int ret = 0;
+// //**************************************************
+// // MP3再生を行えるようにします
+// //**************************************************
+// mrb_value Is_useMp3(mrb_state *mrb, mrb_value self, int mode)
+// {
+// int ret = 0;
 
-#if BOARD == BOARD_GR || FIRMWARE == SDBT || FIRMWARE == SDWF || BOARD == BOARD_P05 || (BOARD == BOARD_P06 && FIRMWARE == CITRUS)
-	ret = mp3_Init(mrb);		//MP3関連メソッドの設定
-#endif
+// #if BOARD == BOARD_GR || FIRMWARE == SDBT || FIRMWARE == SDWF || BOARD == BOARD_P05 || (BOARD == BOARD_P06 && FIRMWARE == CITRUS)
+// 	ret = mp3_Init(mrb);		//MP3関連メソッドの設定
+// #endif
 
-	return (mode == 0?mrb_fixnum_value(ret):mrb_bool_value(ret == 1));
-}
+// 	return (mode == 0?mrb_fixnum_value(ret):mrb_bool_value(ret == 1));
+// }
 
-//**************************************************
-// MP3再生を行えるようにします: System.useMP3
-// System.useMP3(PausePin, StopPin)
-//  PausePin: 再生中の一時停止に使用するピン番号です。LOWになると一時停止/再開を繰り返します
-//  StopPin:  再生を止めるときに使用するピン番号です。LOWになると停止します
-//
-//戻り値
-// 0:使用不可, 1:使用可能
-//**************************************************
-mrb_value mrb_system_useMp3(mrb_state *mrb, mrb_value self)
-{
-	return Is_useMp3(mrb, self, 0);
-}
+// //**************************************************
+// // MP3再生を行えるようにします: System.useMP3
+// // System.useMP3(PausePin, StopPin)
+// //  PausePin: 再生中の一時停止に使用するピン番号です。LOWになると一時停止/再開を繰り返します
+// //  StopPin:  再生を止めるときに使用するピン番号です。LOWになると停止します
+// //
+// //戻り値
+// // 0:使用不可, 1:使用可能
+// //**************************************************
+// mrb_value mrb_system_useMp3(mrb_state *mrb, mrb_value self)
+// {
+// 	return Is_useMp3(mrb, self, 0);
+// }
 
 //**************************************************
 // useで指定したクラスを使用できるようにします
@@ -299,21 +299,21 @@ int ret = 0;
 			return Is_useWiFi(mrb, self, 1);
 		}
 	}
-#if BOARD == BOARD_GR || FIRMWARE == SDBT || FIRMWARE == SDWF || BOARD == BOARD_P05 || (BOARD == BOARD_P06 && FIRMWARE == CITRUS)
-	else if(strcmp(strName, MP3_CLASS) == 0){
-		if(n == 1){
-			return (mode == 0?mrb_fixnum_value(ret):mrb_bool_value(ret == 1));
-		}
+// #if BOARD == BOARD_GR || FIRMWARE == SDBT || FIRMWARE == SDWF || BOARD == BOARD_P05 || (BOARD == BOARD_P06 && FIRMWARE == CITRUS)
+// 	else if(strcmp(strName, MP3_CLASS) == 0){
+// 		if(n == 1){
+// 			return (mode == 0?mrb_fixnum_value(ret):mrb_bool_value(ret == 1));
+// 		}
 
-		n = RARRAY_LEN( vOptions );
-		int pp, sp;
-		if(n >= 2){
-			pp = mrb_fixnum(mrb_ary_ref(mrb, vOptions, 0));
-			sp = mrb_fixnum(mrb_ary_ref(mrb, vOptions, 1));
-			ret = mp3_Init(mrb, pp, sp);		//MP3関連メソッドの設定
-		}
-	}
-#endif
+// 		n = RARRAY_LEN( vOptions );
+// 		int pp, sp;
+// 		if(n >= 2){
+// 			pp = mrb_fixnum(mrb_ary_ref(mrb, vOptions, 0));
+// 			sp = mrb_fixnum(mrb_ary_ref(mrb, vOptions, 1));
+// 			ret = mp3_Init(mrb, pp, sp);		//MP3関連メソッドの設定
+// 		}
+// 	}
+// #endif
 	return (mode == 0?mrb_fixnum_value(ret):mrb_bool_value(ret == 1));
 }
 
@@ -370,7 +370,7 @@ void sys_Init(mrb_state *mrb)
 
 	mrb_define_module_function(mrb, systemModule, "useSD", mrb_system_useSD, MRB_ARGS_NONE());
 	mrb_define_module_function(mrb, systemModule, "useWiFi", mrb_system_useWiFi, MRB_ARGS_NONE());
-	mrb_define_module_function(mrb, systemModule, "useMP3", mrb_system_useMp3, MRB_ARGS_OPT(2));
+	// mrb_define_module_function(mrb, systemModule, "useMP3", mrb_system_useMp3, MRB_ARGS_OPT(2));
 
 	mrb_define_module_function(mrb, systemModule, "use", mrb_system_use,  MRB_ARGS_REQ(1)|MRB_ARGS_OPT(1));
 	mrb_define_module_function(mrb, systemModule, "use?", mrb_system_use_p,  MRB_ARGS_REQ(1)|MRB_ARGS_OPT(1));
