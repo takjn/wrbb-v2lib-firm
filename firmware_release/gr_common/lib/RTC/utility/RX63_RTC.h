@@ -64,6 +64,8 @@
 #define RTC_ALARM_SATURDAY  0x06    //!< アラーム曜日設定（土曜日）
 #define RTC_ALARM_EVERYDAY  0x00    //!< 使用されない。アラームレジスタではENBに0が代入される
 
+#define RTC_PERIOD_MINUTE   0x00    //!< 1分周期で補正
+#define RTC_PERIOD_SECOND   0x01    //!< 1秒周期で補正
 
 /***************************************************************************/
 /*    Type  Definitions                                                    */
@@ -98,7 +100,7 @@ void rtc_attach_alarm_handler(void (*fFunction)(void));
 int rtc_set_alarm_time(int hour, int min, int week_flag = RTC_ALARM_EVERYDAY);
 void rtc_alarm_on();
 void rtc_alarm_off();
-
+void rtc_correct(int adj, int aadjp = 1);
 
 /***************************************************************************/
 /*    Global Variables                                                     */
