@@ -11,3 +11,4 @@
 // ライブラリを定義します
 //**************************************************
 void timer_Init(mrb_state *mrb);
+void timer_final(mrb_state *mrb);

@@ -1,25 +1,20 @@
-@value = 10
-@previous_value = 11
+@value = 6
 
+# 1000ms毎に行う処理の定義
 Timer.set(1000) do
   @value -= 1
+  puts "timer:#{@value}"
 end
 
+# タイマースタート
 Timer.start
 
 while true do
-  # led_test
-  led 1
-  delay 50
-  led 0
-  delay 50
+  led
+  delay 100
 
-  unless @value == @previous_value
-    puts "timer:#{@value}"
-    @previous_value = @value
-
-    break if @value < 1
-  end
+  break if @value < 1
 end
 
+# タイマー停止
 Timer.stop

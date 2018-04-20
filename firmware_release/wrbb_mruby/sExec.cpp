@@ -257,6 +257,8 @@ bool RubyRun(void)
 	mrb->exc = 0;
 	mrb_gc_arena_restore(mrb, arena);
 
+	timer_final(mrb);	//MsTimer2関連メソッドのファイナライズ
+
 	mrb_close(mrb);
 
 	DEBUG_PRINT("mruby", "END");
